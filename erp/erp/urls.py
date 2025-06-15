@@ -3,6 +3,7 @@ from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from finance import views
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('finance.urls')),  # Routes like /api/register/ or /api/transactions/ etc.
@@ -12,5 +13,9 @@ urlpatterns = [
     path("api/inventory/update/<int:pk>/", views.update_stock, name="update_stock"),
     path("procurement/", views.procure_item, name="procure_item"),
     path("api/procurement/history/", views.procurement_history, name="procurement_history"),
+    path('api/inventory/', views.inventory_list),
+
+
 
 ]
+

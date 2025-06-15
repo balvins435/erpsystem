@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom"; // ✅ No need to import Router
+import Header from './components/Header';
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -10,6 +11,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Register from "./pages/Register";
 import Inventory from "./pages/Inventory";
 import Procurement from "./pages/Procurement";
+import ProcurementRecords from "./pages/ProcurementRecords";
+import FinanceDashboard from "./pages/Finance";
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {  
@@ -21,29 +24,31 @@ function App() {
   }, [darkMode]);
 
   return (
-    <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
-      <CssBaseline />
-      <Button 
-        onClick={() => setDarkMode(!darkMode)}
-        variant="contained"
-        style={{ position: "fixed", top: 10, right: 10 }}
-      >
-        {darkMode ? "🌞 Light Mode" : "🌙 Dark Mode"}
-      </Button>
+    <>
+      <Header />
+      <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
+        <CssBaseline />
+        {/* <Button 
+          onClick={() => setDarkMode(!darkMode)}
+          variant="contained"
+          style={{ position: "fixed", top: 10, right: 10 }}
+        >
+          {darkMode ? "🌞 Light Mode" : "🌙 Dark Mode"}
+        </Button> */}
 
-      <Router>
+        {/* ✅ Just use Routes and Route here */}
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} /> {/*  Register route */}
+          <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/procurement" element={<Procurement />} />
-          {/* <Route path="/dashboard" element={<ProtectedRoute role="Admin"><Dashboard /></ProtectedRoute>} /> */}
-          
+          <Route path="/procurement-records" element={<ProcurementRecords />} />
+          <Route path="/finance" element={<FinanceDashboard />} />
         </Routes>
-      </Router>
-    </ThemeProvider>
+      </ThemeProvider>
+    </>
   );
 }
 

@@ -7,9 +7,14 @@ import API from "../api";
 
 const Inventory = () => {
     const [products, setProducts] = useState([]);
-    const [newProduct, setNewProduct] = useState({ name: "", category: "", stock: "", price: "" });
+    const [newProduct, setNewProduct] = useState({
+        name: "",
+        category: "",
+        stock: "",
+        price: "",
+        totalPrice: 0
+    });
     const [supplier] = useState("Best Suppliers Ltd");
-    const [loading, setLoading] = useState(false);
     const [alert, setAlert] = useState("");
 
     useEffect(() => {
@@ -26,7 +31,12 @@ const Inventory = () => {
     };
 
     const handleChange = (e) => {
-        setNewProduct({ ...newProduct, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        const updated = { ...newProduct, [name]: value };
+        const stock = parseInt(updated.stock) || 0;
+        const price = parseFloat(updated.price) || 0;
+        updated.totalPrice = stock * price;
+        setNewProduct(updated);
     };
 
     const handleAddProduct = async () => {
@@ -42,7 +52,7 @@ const Inventory = () => {
                 price: Number(price),
             });
             setAlert("✅ Product added successfully!");
-            setNewProduct({ name: "", category: "", stock: "", price: "" });
+            setNewProduct({ name: "", category: "", stock: "", price: "", totalPrice: 0 });
             fetchInventory();
         } catch (error) {
             console.error("Error adding product:", error);
@@ -77,6 +87,13 @@ const Inventory = () => {
         }
     };
 
+    const formatCurrency = (amount) =>
+        new Intl.NumberFormat("en-KE", {
+            style: "currency",
+            currency: "KES",
+            minimumFractionDigits: 2,
+        }).format(amount);
+
     return (
         <Container>
             <Typography variant="h4" gutterBottom>📊 Inventory Management</Typography>
@@ -89,26 +106,33 @@ const Inventory = () => {
                 <Grid container spacing={2}>
                     <Grid item xs={12} sm={6} md={3}>
                         <TextField
-                            fullWidth label="Product Name" name="name" value={newProduct.name}
-                            onChange={handleChange}
+                            fullWidth label="Product Name" name="name"
+                            value={newProduct.name} onChange={handleChange}
                         />
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
                         <TextField
-                            fullWidth label="Category" name="category" value={newProduct.category}
-                            onChange={handleChange}
+                            fullWidth label="Category" name="category"
+                            value={newProduct.category} onChange={handleChange}
                         />
                     </Grid>
-                    <Grid item xs={6} md={3}>
+                    <Grid item xs={6} md={2}>
                         <TextField
-                            fullWidth label="Stock" name="stock" type="number" value={newProduct.stock}
-                            onChange={handleChange}
+                            fullWidth label="Stock Quantity" name="stock" type="number"
+                            value={newProduct.stock} onChange={handleChange}
                         />
                     </Grid>
-                    <Grid item xs={6} md={3}>
+                    <Grid item xs={6} md={2}>
                         <TextField
-                            fullWidth label="Price" name="price" type="number" value={newProduct.price}
-                            onChange={handleChange}
+                            fullWidth label="Unit Price" name="price" type="number"
+                            value={newProduct.price} onChange={handleChange}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={2}>
+                        <TextField
+                            fullWidth label="Total Price"
+                            value={formatCurrency(newProduct.totalPrice || 0)}
+                            InputProps={{ readOnly: true }}
                         />
                     </Grid>
                     <Grid item xs={12}>
@@ -127,7 +151,8 @@ const Inventory = () => {
                         <TableCell><b>Name</b></TableCell>
                         <TableCell><b>Category</b></TableCell>
                         <TableCell><b>Stock</b></TableCell>
-                        <TableCell><b>Price</b></TableCell>
+                        <TableCell><b>Unit Price</b></TableCell>
+                        <TableCell><b>Total Price</b></TableCell>
                         <TableCell><b>Actions</b></TableCell>
                     </TableRow>
                 </TableHead>
@@ -137,7 +162,8 @@ const Inventory = () => {
                             <TableCell>{product.name}</TableCell>
                             <TableCell>{product.category}</TableCell>
                             <TableCell>{product.stock}</TableCell>
-                            <TableCell>${product.price.toFixed(2)}</TableCell>
+                            <TableCell>{formatCurrency(product.price)}</TableCell>
+                            <TableCell>{formatCurrency(product.stock * product.price)}</TableCell>
                             <TableCell>
                                 <Grid container spacing={1}>
                                     {product.low_stock && (

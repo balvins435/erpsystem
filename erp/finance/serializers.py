@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Procurement, Transaction,  CustomUser, InventoryItem
+from .models import Budget, Expense, Income, Payment, Procurement, Transaction,  CustomUser, InventoryItem
 from django.contrib.auth.models import User
 
 class TransactionSerializer(serializers.ModelSerializer):
@@ -26,9 +26,36 @@ class UserSerializer(serializers.ModelSerializer):
 class InventoryItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = InventoryItem
-        fields = '__all__'  # or list the specific fields
+        fields = ['id', 'name', 'category', 'stock', 'price']
 
 class ProcurementSerializer(serializers.ModelSerializer):
+    product = serializers.CharField(source='product.name')  # ✅ show name instead of ID
+
     class Meta:
         model = Procurement
+        fields = ['id', 'product', 'quantity', 'supplier', 'status', 'requested_at']
+
+#Financeserializers
+
+class BudgetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Budget
+        fields = '__all__'
+
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Expense
+        fields = '__all__'
+
+
+class IncomeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Income
+        fields = '__all__'
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
         fields = '__all__'

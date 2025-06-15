@@ -1,6 +1,6 @@
 from rest_framework import generics
-from .models import Procurement, Transaction, CustomUser, InventoryItem
-from .serializers import ProcurementSerializer, TransactionSerializer, UserSerializer, InventoryItemSerializer
+from .models import Budget, Expense, Income, Payment, Procurement, Transaction, CustomUser, InventoryItem
+from .serializers import BudgetSerializer, ExpenseSerializer, IncomeSerializer, PaymentSerializer, ProcurementSerializer, TransactionSerializer, UserSerializer, InventoryItemSerializer
 from rest_framework.permissions import IsAuthenticated
 from .permissions import IsAdmin, IsFinanceManager, IsEmployee
 from rest_framework.decorators import api_view
@@ -11,6 +11,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from .serializers import ProcurementSerializer
 
 
 @api_view(['POST'])  # ✅ Ensure it allows POST
@@ -104,12 +107,24 @@ def procure_item(request):
 
     try:
         product = InventoryItem.objects.get(id=product_id)
-        # Maybe save to a Procurement table?
-        product.stock += quantity
-        product.save()
+        
+        # ✅ Save to Procurement model
+        procurement = Procurement.objects.create(
+            product=product,
+            quantity=quantity,
+            supplier=supplier,
+            status="Pending"  # or "Received" depending on your logic
+        )
+
+        # Optional: update stock only if received
+        # product.stock += quantity
+        # product.save()
+
         return Response({"message": "Procurement successful"})
+    
     except InventoryItem.DoesNotExist:
         return Response({"error": "Product not found"}, status=404)
+
 
 @api_view(["GET"])
 def procurement_history(request):
@@ -117,11 +132,47 @@ def procurement_history(request):
     serializer = ProcurementSerializer(procurements, many=True)
     return Response(serializer.data)
 
-@api_view(["GET"])
-def get_inventory_items(request):
+
+
+@api_view(['GET'])
+def inventory_list(request):
     items = InventoryItem.objects.all()
     serializer = InventoryItemSerializer(items, many=True)
     return Response(serializer.data)
+
+class ProcurementViewSet(viewsets.ModelViewSet):
+    queryset = Procurement.objects.all()
+    serializer_class = ProcurementSerializer
+
+    @action(detail=True, methods=['post'])
+    def receive(self, request, pk=None):
+        procurement = self.get_object()
+        if procurement.status == "Received":
+            return Response({"detail": "Already received."}, status=400)
+        procurement.receive()
+        return Response({"detail": "Procurement received and stock updated."})
+    
+@api_view(['GET', 'POST'])
+def procurement_list(request):
+    if request.method == 'GET':
+        procurements = Procurement.objects.all()
+        serializer = ProcurementSerializer(procurements, many=True)
+        return Response(serializer.data)
+
+    if request.method == 'POST':
+        serializer = ProcurementSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': 'Procurement created successfully'})
+        return Response(serializer.errors, status=400)
+
+# @api_view(['POST'])
+# def procure_item(request):
+#     serializer = ProcurementSerializer(data=request.data)
+#     if serializer.is_valid():
+#         serializer.save()
+#         return Response(serializer.data, status=201)
+#     return Response(serializer.errors, status=400)
 
 class TransactionListCreateView(generics.ListCreateAPIView):
     queryset = Transaction.objects.all()
@@ -160,3 +211,28 @@ class IsFinanceManager(BasePermission):
 class IsEmployee(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role == 'Employee'
+
+#financeviews
+
+class BudgetViewSet(viewsets.ModelViewSet):
+    queryset = Budget.objects.all()
+    serializer_class = BudgetSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class ExpenseViewSet(viewsets.ModelViewSet):
+    queryset = Expense.objects.all()
+    serializer_class = ExpenseSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class IncomeViewSet(viewsets.ModelViewSet):
+    queryset = Income.objects.all()
+    serializer_class = IncomeSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class PaymentViewSet(viewsets.ModelViewSet):
+    queryset = Payment.objects.all()
+    serializer_class = PaymentSerializer
+    permission_classes = [IsAuthenticated]
